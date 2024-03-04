@@ -2,10 +2,11 @@ from flask import Flask, request, jsonify, send_file
 from PIL import Image
 import io
 import os
-import datetime as datatime
+from datetime import datetime
 
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = "./static/images"
+app.config["UPLOAD_FOLDER"] = "../static/uploaded_images"
+app.config["OUT_FOLDER"] = "../static/generated_images"
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg"}
 
 def generate_image(input_image):
@@ -21,14 +22,18 @@ def generate():
     file = request.files["input_image"]
     if file and allowed_file(file.filename):
         input_image = Image.open(file)
+        
+        utc_timestamp = datetime.utcnow()
 
-        # input_image_path = os.path.join(app.config["UPLOAD_FOLDER"], "input_image.png")
-        # input_image.save(input_image_path)
+        timestamp_str = utc_timestamp.strftime("%Y-%m-%d_%H-%M-%S")
+
+        input_image_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{file.filename}_in_{timestamp_str}.png")
+        input_image.save(input_image_path)
 
         generated_image = generate_image(input_image)
 
-        # generated_image_path = os.path.join(app.config["UPLOAD_FOLDER"], "generated_image.png")
-        # generated_image.save(generated_image_path)
+        generated_image_path = os.path.join(app.config["OUT_FOLDER"], f"{file.filename}_out_{timestamp_str}.png")
+        generated_image.save(generated_image_path)
 
         generated_image_io = io.BytesIO()
         generated_image.save(generated_image_io, format='PNG')
