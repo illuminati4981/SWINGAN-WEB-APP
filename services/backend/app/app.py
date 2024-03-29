@@ -3,6 +3,7 @@ from PIL import Image
 import io
 import os
 import datetime as datatime
+import subprocess
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "./static/images"
@@ -11,6 +12,10 @@ app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg"}
 def generate_image(input_image):
     generated_image = input_image  # Placeholder code
     return generated_image
+
+def run_inference(model_path, input_dir, output_dir):
+    command = ["python", "inference.py", model_path, input_dir, output_dir]   
+    subprocess.run(command, check=True)
 
 # Define the route for image generation
 @app.route("/generate", methods=["POST"])
