@@ -3,15 +3,31 @@ from PIL import Image
 import io
 import os
 from datetime import datetime
+import zipfile
 
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = "../static/uploaded_images"
-app.config["OUT_FOLDER"] = "../static/generated_images"
+app.config["UPLOAD_FOLDER"] = "static/upload"
+app.config["OUT_FOLDER"] = "static/out"
+app.config["ZIP_FOLDER"] = "static/zip"
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg"}
 
 def generate_image(input_image):
     generated_image = input_image  # Placeholder code
     return generated_image
+
+def zip_image(image, filename):
+    img_buffer = io.BytesIO()
+    image.save(img_buffer, 'PNG')
+    img_buffer.seek(0)
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        zip_file.writestr(filename, img_buffer.read())
+        zip_buffer.seek(0)
+
+    with open(filename, 'wb') as f:
+        f.write(zip_buffer.getvalue())
+
 
 # Define the route for image generation
 @app.route("/generate", methods=["POST"])
@@ -29,6 +45,9 @@ def generate():
 
         input_image_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{file.filename}_in_{timestamp_str}.png")
         input_image.save(input_image_path)
+
+        input_zip_path = os.path.join(app.config["ZIP_FOLDER"], f"{file.filename}_zip_{timestamp_str}.zip")
+        zip_image(input_image, input_zip_path)
 
         generated_image = generate_image(input_image)
 
