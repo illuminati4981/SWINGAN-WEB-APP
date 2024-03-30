@@ -3,6 +3,7 @@ import os
 import pickle
 import torch
 from torchvision.io import read_image
+from torchvision.transforms import ToTensor
 from torchvision.transforms.functional import ToPILImage
 
 def load_model(model_path):
@@ -19,32 +20,16 @@ def perform_inference(model, input_image):
     
     with torch.no_grad():
         output = model(input_tensor)
+    return output
 
-    output_image = ToPILImage()(((output.squeeze(0)+1)*127.5).cpu())
+def process_images(model, input_image):
+    input_image = ToTensor()(input_image)/127.5 - 1
+    generated_image = perform_inference(model, input_image)
+    output_image = ToPILImage()(((generated_image.squeeze(0)+1)*127.5).cpu())
     return output_image
 
-def process_images(model, input_dir, output_dir):
-    os.makedirs(output_dir, exist_ok=True)
+def restore_image(model_path, input_image):
 
-    for filename in os.listdir(input_dir):
-        if filename.endswith(".jpg") or filename.endswith(".png"):
-            input_path = os.path.join(input_dir, filename)
-            output_path = os.path.join(output_dir, filename)
-
-            input_image = read_image(input_path)/127.5 - 1
-            generated_image = perform_inference(model, input_image)
-            generated_image.save(output_path)
-            
-            print(f"Inference completed for {filename}. Output saved to {output_path}.")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("model_path", type=str, help="Directory path of the model checkpoint")
-    parser.add_argument("input_dir", type=str, help="Directory path containing the input images")
-    parser.add_argument("output_dir", type=str, help="Directory path to save the output images")
-
-    args = parser.parse_args()
-
-    model = load_model(args.model_dir)
+    model = load_model(model_path)
     
-    process_images(model, args.input_dir, args.output_dir)
+    return process_images(model, input_image)
