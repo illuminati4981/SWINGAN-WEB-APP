@@ -4,7 +4,7 @@ import io
 import os
 from datetime import datetime
 import zipfile
-# from utils.inference import restore_image
+from utils.inference import restore_image
 
 app = Flask(__name__)
 
@@ -22,8 +22,8 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
 
 def generate_image(model_path, input_image):
-    # generated_image = restore_image(model_path, input_image)
-    generated_image = input_image.copy()
+    generated_image = restore_image(model_path, input_image)
+    # generated_image = input_image.copy()
     return generated_image
 
 def zip_image(image, filename):

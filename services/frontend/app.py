@@ -69,8 +69,10 @@ block_css = \
 footer{display:none !important}
 h1{justify-content: center;}
 
-#img-input, #img_output {
+
+#img-input, #img_output{
     align-items: center;
+    justify-self: center;
     justify-content: center;
 }
 
@@ -80,7 +82,16 @@ h1{justify-content: center;}
 #img-slider img{
   object-fit: contain;
 }
+"""
 
+interface_css = \
+"""
+.image-container {
+    display: flex;
+    justify-content: center;
+    justify-self: center;
+    align-items: center;
+}
 """
 
 block = gr.Blocks(
@@ -89,7 +100,7 @@ block = gr.Blocks(
     theme=gr.themes.Monochrome(),
 ).queue()
 
-input_image = gr.Image(type='filepath', sources=["upload"], label="Input a image", width=512, height=512, elem_id="img-input")
+input_image = gr.Image(type='filepath', sources=["upload"], label="Input Image", width=512, height=512, elem_id="img-input", interactive=True)
 generated_image = gr.Image(label="Generated Image", width=512, height=512, elem_id="img-output")
 
 with block as demo:
@@ -103,7 +114,8 @@ with block as demo:
                 fn=restore_handler,
                 inputs=input_image,
                 outputs=generated_image,
-                allow_flagging="never"
+                allow_flagging="never",
+                css=interface_css
             )
         # with gr.Tab("Restored your image under degradation"):
         #     gr.Markdown("Under construction")
