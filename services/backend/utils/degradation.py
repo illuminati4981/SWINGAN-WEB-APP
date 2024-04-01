@@ -1,11 +1,11 @@
 from PIL import ImageFilter, Image
 
 degradation = {
-    "blur" : lambda : ImageFilter.BLUR,
-    "Gaussian Blur": lambda radius :  ImageFilter.GaussianBlur(radius=radius),
-    "Box Blur": lambda radius :  ImageFilter.BoxBlur(radius=radius),
-    "Median Filter" : lambda size: ImageFilter.MedianFilter(size=size),
-    "Unsharp" : lambda radius, percent, threshold : ImageFilter.MedianFilter(radius, percent, threshold)
+    "blur" : lambda *args, **kwargs: ImageFilter.BLUR(*args, **kwargs),
+    "Gaussian Blur": lambda *args, **kwargs :  ImageFilter.GaussianBlur(*args, **kwargs),
+    "Box Blur": lambda *args, **kwargs:  ImageFilter.BoxBlur(*args, **kwargs),
+    "Median Filter" : lambda *args, **kwargs: ImageFilter.MedianFilter(*args, **kwargs),
+    "Unsharp" : lambda *args, **kwargs : ImageFilter.MedianFilter(*args, **kwargs)
 }
 
 def degrade(effect_name : str, image : Image, **kwargs) -> Image:

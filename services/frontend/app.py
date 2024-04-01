@@ -43,18 +43,12 @@ def restore_handler(filepath):
         return None
 
 # --------------------------------- interface -------------------------------- #
-input_image = gr.Image(type='filepath', sources=["upload"], label="Input a image")
-generated_image = gr.Image(label="Generated Image")
-
-input_image.css = "height: 300px; width: 300px; object-fit: cover; object-position: center;"
-generated_image.css = "height: 300px; width: 300px; object-fit: cover; object-position: center;"
-
 MARKDOWN1 = \
 """
 # SwinGAN - Image Restoration
 #### Generative AI on Visual Content Creation (CQF1)
-> CHONG Ho Yuen, LI Yiu Ting, KWAN Kam To Christopher <br>
 > Advised by Prof. Qifeng CHEN <br>
+> CHONG Ho Yuen, LI Yiu Ting, KWAN Kam To Christopher <br>
 
 ---
 """
@@ -70,17 +64,38 @@ Degradations can occur during image acquisition and transmission due to factors 
 
 ---
 """
+block_css = \
+"""
+footer{display:none !important}
+h1{justify-content: center;}
+
+#img-input, #img_output {
+    align-items: center;
+    justify-content: center;
+}
+
+#img-slider {
+  display: flex;
+}
+#img-slider img{
+  object-fit: contain;
+}
+
+"""
 
 block = gr.Blocks(
     title="SwinGAN",
-    css="footer{display:none !important} h1{justify-content: center;}",
+    css=block_css,
     theme=gr.themes.Monochrome(),
 ).queue()
 
-with block:
+input_image = gr.Image(type='filepath', sources=["upload"], label="Input a image", width=512, height=512, elem_id="img-input")
+generated_image = gr.Image(label="Generated Image", width=512, height=512, elem_id="img-output")
+
+with block as demo:
     with gr.Column():
         gr.Markdown(MARKDOWN1)
-        ImageSlider(value=(before_image, after_image), label="Before - After", show_download_button=True)
+        ImageSlider(value=(before_image, after_image), label="Before & After", show_download_button=True, elem_id="img-slider")
         gr.Markdown(MARKDOWN2)
         gr.Markdown("## Restored image with SwinGAN")
         with gr.Tab("Restore your image"):
@@ -88,11 +103,10 @@ with block:
                 fn=restore_handler,
                 inputs=input_image,
                 outputs=generated_image,
-                css="footer{display:none !important} h1{justify-content: center;}",
                 allow_flagging="never"
             )
-        with gr.Tab("Restored your image under degradation"):
-            gr.Markdown("Under construction")
+        # with gr.Tab("Restored your image under degradation"):
+        #     gr.Markdown("Under construction")
 
 if __name__ == "__main__":
-    block.launch(debug=True)
+    demo.launch(debug=True)
