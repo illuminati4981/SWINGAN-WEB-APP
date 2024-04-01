@@ -85,7 +85,9 @@ def save_image_grid(img, fname, drange, grid_size):
 
     gw, gh = grid_size
     _N, C, H, W = img.shape
+    print('img ', img.shape)
     img = img.reshape(gh, gw, C, H, W)
+    print('img ', img.shape)
     img = img.transpose(0, 3, 1, 4, 2)
     img = img.reshape(gh * H, gw * W, C)
 
@@ -107,6 +109,7 @@ def training_loop(
     data_loader_kwargs={},  # Options for torch.utils.data.DataLoader.
     G_kwargs={},  # Options for generator network.
     D_kwargs={},  # Options for discriminator network.
+    Swin_opt_kwargs={}, # Options for swin optimizer.
     G_opt_kwargs={},  # Options for generator optimizer.
     D_opt_kwargs={},  # Options for discriminator optimizer.
     augment_kwargs=None,  # Options for augmentation pipeline. None = disable.
@@ -140,9 +143,9 @@ def training_loop(
 ):
     # Initialize.
     image_snapshot_ticks=500
-    network_snapshot_ticks=1000
+    network_snapshot_ticks=2000
     total_img = training_set_kwargs.max_size
-    total_kimg = 140000
+    total_kimg = 50000
     # total_kimg = 70000
 
     start_time = time.time()
@@ -168,6 +171,8 @@ def training_loop(
     # Load training set.
     if rank == 0:
         print("Loading training set...")
+
+    print('DataLoader Arguements ', data_loader_kwargs)
         
     training_set = dnnlib.util.construct_class_by_name(
         **training_set_kwargs
@@ -311,7 +316,7 @@ def training_loop(
         swin_start_event = torch.cuda.Event(enable_timing=True)
         swin_end_event = torch.cuda.Event(enable_timing=True)
     swin_opt = dnnlib.util.construct_class_by_name(
-        params=swin.parameters(), **G_opt_kwargs
+        params=swin.parameters(), **Swin_opt_kwargs
     )
 
     for name, module, opt_kwargs, reg_interval in [
@@ -361,7 +366,9 @@ def training_loop(
     if rank == 0:
         print("Exporting sample images...")
         grid_size, images, labels = setup_snapshot_image_grid(training_set=training_set)
-        grid_z = torch.randn([labels.shape[0], G.z_dim], device=device).split(batch_gpu)
+        print('labels ', labels)
+        print('batch_gpu ', batch_gpu)
+        grid_z = torch.randn([labels.shape[0], G.z_dim], device=device).split(batch_gpu)   
         grid_c = torch.from_numpy(labels).to(device).split(batch_gpu)
 
     # Initialize logs.
@@ -525,10 +532,10 @@ def training_loop(
             )
 
 
-        # Print status line, accumulating the same information in stats_collector.
+        # # Print status line, accumulating the same information in stats_collector.
         tick_end_time = time.time()
 
-        # Check for abort.
+        # # Check for abort.
         done = (cur_nimg >= total_kimg)
         if (not done) and (abort_fn is not None) and abort_fn():
             done = True
@@ -546,7 +553,6 @@ def training_loop(
           print('Validation...')
           val_img, phase_real_c = next(validation_set_iterator) 
           val_img = torch.clamp((val_img).round(), 0, 255) / 255.
-          print('val_img ', val_img[0][0])
           
           transformed_result = deg_train_transform(val_img.to(torch.float32))
           val_real_img = transformed_result["jpg"].permute(0, 3, 1, 2)
@@ -562,7 +568,6 @@ def training_loop(
 
           G = G.to('cpu')
           G_ema = G_ema.to('cuda')
-
           gen_img = G_ema.mapping(gen_img, grid_c[0])
           gen_img = G_ema.synthesis(gen_img, noises).cpu()
           gen_img = gen_img.to('cpu')
@@ -571,13 +576,14 @@ def training_loop(
           print('Saving Image Snapshot...')
           save_img = torch.cat([val_real_img, deg_img, gen_img]).numpy()
           save_image_grid(save_img, os.path.join(run_dir, f'result_{batch_idx}.png'), drange=[-1,1], grid_size=(batch_size, 3))
-
+          for d in deg_img:
+            save_image_grid(d.unsqueeze(0), os.path.join(run_dir, f'degraded_{batch_idx}.png'), drange=[-1,1], grid_size=(1, 1))
           G = G.to('cuda')
           G_ema = G_ema.to('cuda')
 
           # # Evaluate metrics.
           print('Evaluating Model...')
-          losses.append(loss_values)
+          losses.append(loss_values[0])
           print('Training losses: ', losses)
 
           # FID
@@ -640,6 +646,9 @@ def training_loop(
     # Done.
     if rank == 0:
         print()
+        print('Total FIDs: ', np.mean(fids))
+        print('Total PSNRs: ', np.mean(psnrs))
+        print('Total LPIPS: ', np.mean(lpips))
         print("Exiting...")
 
 

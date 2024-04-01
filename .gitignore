@@ -2,6 +2,6 @@ flagged/
 *.yml
 *.jpeg
 *.jpg
-*.png
 *.zip
 __pycache__
+*.pkl
