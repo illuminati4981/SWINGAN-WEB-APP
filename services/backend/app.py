@@ -4,13 +4,13 @@ import io
 import os
 from datetime import datetime
 import zipfile
-from utils.inference import restore_image
+from network.inference import restore_image
 
 app = Flask(__name__)
 
 # ---------------------------------- config ---------------------------------- #
 app.config["RECORDS_DIR"] = "static/records"
-app.config["MODEL_PATH"] = "static/model"
+app.config["MODEL_PATH"] = "network/checkpoint/network-snapshot-019201.pkl"
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg"}
 
 # --------------------------------- function --------------------------------- #
@@ -20,11 +20,6 @@ def get_filename(filename) -> str:
     
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
-
-def generate_image(model_path, input_image):
-    generated_image = restore_image(model_path, input_image)
-    # generated_image = input_image.copy()
-    return generated_image
 
 def zip_image(image, filename):
 
@@ -40,6 +35,28 @@ def zip_image(image, filename):
     with open(filename, 'wb') as f:
         f.write(zip_buffer.getvalue())
 
+def generate_image(model_path, input_image, filename):
+    generated_image = restore_image(model_path, input_image)
+    # generated_image = input_image.copy()
+    # ---------------------------- make save directory --------------------------- #
+    timestamp_str = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+    record_dir = os.path.join(app.config["RECORDS_DIR"], f"record_{timestamp_str}")
+    assert not os.path.exists(record_dir), f"{record_dir} should not be existed."
+    os.mkdir(record_dir)
+
+    # ------------------------- input, zip, out filepath ------------------------- #
+    input_image_path = os.path.join(record_dir, f"{filename}_in.png")
+    input_zip_path = os.path.join(record_dir, f"{filename}_compressed.zip")
+    out_filename = f"{filename}_out.png" 
+    generated_image_path = os.path.join(record_dir, out_filename)
+
+    # --------------------------- input, zip, out save --------------------------- #
+    input_image.save(input_image_path, format='PNG')
+    zip_image(input_image, input_zip_path)
+    generated_image.save(generated_image_path, format='PNG')
+
+    return generated_image
+
 # ----------------------------------- Route ---------------------------------- #
 
 @app.route("/generate", methods=["GET", "POST"])
@@ -53,31 +70,13 @@ def generate():
 
     input_image = Image.open(file)
     # ------------------------------ Generate image ------------------------------ #
-    generated_image = generate_image(app.config["MODEL_PATH"], input_image)
-
-    # ---------------------------- make save directory --------------------------- #
-    timestamp_str = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
-    record_dir = os.path.join(app.config["RECORDS_DIR"], f"record_{timestamp_str}")
-    assert not os.path.exists(record_dir), f"{record_dir} should not be existed."
-    os.mkdir(record_dir)
-
-    # ------------------------- input, zip, out filepath ------------------------- #
     filename = get_filename(file.filename)
-    input_image_path = os.path.join(record_dir, f"{filename}_in.png")
-    input_zip_path = os.path.join(record_dir, f"{filename}_compressed.zip")
-    out_filename = f"{filename}_out.png" 
-    generated_image_path = os.path.join(record_dir, out_filename)
-
-    # --------------------------- input, zip, out save --------------------------- #
-    input_image.save(input_image_path, format='PNG')
-    zip_image(input_image, input_zip_path)
-    generated_image.save(generated_image_path, format='PNG')
-    
+    generated_image = generate_image(app.config["MODEL_PATH"], input_image, filename)
     # --------------------- Generated PIL image to io stream --------------------- #
     generated_image_io = io.BytesIO()
     generated_image.save(generated_image_io, format='PNG')
     generated_image_io.seek(0)
-
+    out_filename = f"{filename}_out.png" 
     # --------------------------------- send file -------------------------------- #
     return send_file(generated_image_io, mimetype='image/png', as_attachment=True, download_name=out_filename)
 

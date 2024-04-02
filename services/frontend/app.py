@@ -100,8 +100,8 @@ block = gr.Blocks(
     theme=gr.themes.Monochrome(),
 ).queue()
 
-input_image = gr.Image(type='filepath', sources=["upload"], label="Input Image", width=512, height=512, elem_id="img-input", interactive=True)
-generated_image = gr.Image(label="Generated Image", width=512, height=512, elem_id="img-output")
+input_image = gr.Image(type='filepath', sources=["upload"], label="Input Image", elem_id="img-input", interactive=True)
+generated_image = gr.Image(label="Generated Image", elem_id="img-output")
 
 with block as demo:
     with gr.Column():

@@ -64,10 +64,11 @@ def process_images(input_image, swin, generator):
     return generated_image
 
 
-def restore_image(model_path, input_image, output_path):
+def restore_image(model_path, input_image, output_path = None):
     swin, generator = init_models(model_path)
     img = process_images(input_image, swin, generator)
-    save_images(img, output_path)
+    if output_path:
+        save_images(img, output_path)
     return img
 
 
