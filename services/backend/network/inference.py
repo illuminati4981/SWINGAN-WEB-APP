@@ -6,12 +6,12 @@ import torch.nn as nn
 from torchvision.io import read_image
 from torchvision.transforms import PILToTensor
 import legacy
-import dnnlib
 from torch_utils import misc
 from CustomSwin import CustomSwin
 from training.networks import Generator
 import numpy as np
 from PIL import Image
+import dnnlib
 
 def init_models(model_path):
     swin = CustomSwin().requires_grad_(False)

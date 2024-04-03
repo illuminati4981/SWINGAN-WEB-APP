@@ -4,13 +4,13 @@ import io
 import os
 from datetime import datetime
 import zipfile
-from network.inference import restore_image
+from inference import restore_image
 
 app = Flask(__name__)
 
 # ---------------------------------- config ---------------------------------- #
-app.config["RECORDS_DIR"] = "static/records"
-app.config["MODEL_PATH"] = "network/checkpoint/network-snapshot-019201.pkl"
+app.config["RECORDS_DIR"] = "../static/records"
+app.config["MODEL_PATH"] = "../checkpoint/network-snapshot-019201.pkl"
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg"}
 
 # --------------------------------- function --------------------------------- #
