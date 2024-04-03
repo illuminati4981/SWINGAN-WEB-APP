@@ -36,8 +36,6 @@ def zip_image(image, filename):
         f.write(zip_buffer.getvalue())
 
 def generate_image(model_path, input_image, filename):
-    generated_image = restore_image(model_path, input_image)
-    # generated_image = input_image.copy()
     # ---------------------------- make save directory --------------------------- #
     timestamp_str = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
     record_dir = os.path.join(app.config["RECORDS_DIR"], f"record_{timestamp_str}")
@@ -53,8 +51,11 @@ def generate_image(model_path, input_image, filename):
     # --------------------------- input, zip, out save --------------------------- #
     input_image.save(input_image_path, format='PNG')
     zip_image(input_image, input_zip_path)
-    generated_image.save(generated_image_path, format='PNG')
+    # generated_image.save(generated_image_path, format='PNG')
 
+    restore_image(model_path, input_image, output_path=generated_image_path)
+    generated_image = Image.open(generated_image_path)
+    
     return generated_image
 
 # ----------------------------------- Route ---------------------------------- #
