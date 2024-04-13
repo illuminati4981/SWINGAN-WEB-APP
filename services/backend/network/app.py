@@ -4,13 +4,14 @@ import io
 import os
 from datetime import datetime
 import zipfile
-from inference import restore_image
+# from inference import restore_image
+restore_image = lambda *x : None
 
 app = Flask(__name__)
 
 # ---------------------------------- config ---------------------------------- #
 app.config["RECORDS_DIR"] = "../static/records"
-app.config["MODEL_PATH"] = "../checkpoint/network-snapshot-019201.pkl"
+app.config["MODEL_PATH"] = "../checkpoint/"
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg"}
 
 # --------------------------------- function --------------------------------- #
@@ -69,10 +70,12 @@ def generate():
     if file is None or not allowed_file(file.filename):
         return jsonify({"error": "Invalid file."}), 400
 
+    checkpoint = request.args.get("checkpoint")
+    model_path = os.path.join(app.config["MODEL_PATH"], checkpoint)
     input_image = Image.open(file)
     # ------------------------------ Generate image ------------------------------ #
     filename = get_filename(file.filename)
-    generated_image = generate_image(app.config["MODEL_PATH"], input_image, filename)
+    generated_image = generate_image(model_path, input_image, filename)
     # --------------------- Generated PIL image to io stream --------------------- #
     generated_image_io = io.BytesIO()
     generated_image.save(generated_image_io, format='PNG')

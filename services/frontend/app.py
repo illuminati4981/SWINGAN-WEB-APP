@@ -11,7 +11,10 @@ after_image = Image.open("sample/Vue.js_Logo.png")
 
 # -------------------------------- to backend -------------------------------- #
 endpoint_url = "http://localhost:5000/generate"
-def restore_handler(filepath):
+def restore_handler(filepath, checkpoint):
+
+    print(filepath, checkpoint)
+    
     if filepath is None:   
         gr.Warning("There is no image.")
         return None
@@ -28,9 +31,12 @@ def restore_handler(filepath):
     image.save(image_io, format='PNG')
     image_io.seek(0)
 
+
+    params = {"checkpoint" : checkpoint}
     files = {"input_image": (filename, image_io, "image/png")}
+
     try:
-        response = requests.post(endpoint_url, files=files)
+        response = requests.post(endpoint_url, files=files, params=params)
         if response.ok:
             gen_img = Image.open(io.BytesIO(response.content))
             return gen_img
@@ -69,16 +75,10 @@ block_css = \
 footer{display:none !important}
 h1{justify-content: center;}
 
-
-#img-input, #img_output{
+div:has(#img-input, #img-output) {
     align-items: center;
-    justify-self: center;
-    justify-content: center;
 }
 
-#img-slider {
-  display: flex;
-}
 #img-slider img{
   object-fit: contain;
 }
@@ -100,20 +100,31 @@ block = gr.Blocks(
     theme=gr.themes.Monochrome(),
 ).queue()
 
-input_image = gr.Image(type='filepath', sources=["upload"], label="Input Image", elem_id="img-input", interactive=True, height=192, width=192)
-generated_image = gr.Image(label="Generated Image", elem_id="img-output", height=192, width=192)
+# TODO add the checkpoint filename into here
+checkpoint_choice = [
+    "network-snapshot-019201.pkl"
+]
+
+inputs = [
+    gr.Image(type='filepath', sources=["upload"], label="Input Image", elem_id="img-input", interactive=True, height=192, width=192),
+    gr.Dropdown(choices=checkpoint_choice, value="checkpoint 1", label="Checkpoint")
+]
+
+outputs = [
+    gr.Image(label="Generated Image", elem_id="img-output", height=192, width=192, show_download_button=True, type="filepath")
+]
 
 with block as demo:
     with gr.Column():
         gr.Markdown(MARKDOWN1)
-        ImageSlider(value=(before_image, after_image), label="Before & After", show_download_button=True, elem_id="img-slider")
+        # ImageSlider(value=(before_image, after_image), label="Before & After", show_download_button=True, elem_id="img-slider")
         gr.Markdown(MARKDOWN2)
         gr.Markdown("## Restored image with SwinGAN")
         with gr.Tab("Restore your image"):
             gr.Interface(
                 fn=restore_handler,
-                inputs=input_image,
-                outputs=generated_image,
+                inputs=inputs,
+                outputs=outputs,
                 allow_flagging="never",
                 css=interface_css
             )
