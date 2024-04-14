@@ -4,8 +4,7 @@ import io
 import os
 from datetime import datetime
 import zipfile
-# from inference import restore_image
-restore_image = lambda *x : None
+from inference import restore_image
 
 app = Flask(__name__)
 
@@ -72,7 +71,11 @@ def generate():
 
     checkpoint = request.args.get("checkpoint")
     model_path = os.path.join(app.config["MODEL_PATH"], checkpoint)
+    if not os.path.exists(model_path): 
+         return jsonify({"error": "The checkpoint is not existed."}), 400
+
     input_image = Image.open(file)
+
     # ------------------------------ Generate image ------------------------------ #
     filename = get_filename(file.filename)
     generated_image = generate_image(model_path, input_image, filename)
