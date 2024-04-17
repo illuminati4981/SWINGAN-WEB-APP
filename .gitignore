@@ -4,5 +4,5 @@ flagged/
 *.jpg
 *.zip
 __pycache__
-*.pkl
 remark.md
+Dockerfile
