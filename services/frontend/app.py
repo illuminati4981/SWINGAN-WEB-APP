@@ -8,7 +8,7 @@ from os import path
 # ----------------------------------- setup ---------------------------------- #
 # before_image = Image.open("sample/React-icon.png")
 # after_image = Image.open("sample/Vue.js_Logo.png")
-swin_img = Image.open("sample/swin1.png")
+swin_img = Image.open("sample/SwinTransformer.png")
 pipeline_img = Image.open("sample/pipeline.png")
 deg_mod_img = Image.open("sample/deg_mod.png")
 timeout = 60
